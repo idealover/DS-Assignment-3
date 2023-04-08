@@ -12,3 +12,9 @@
 
 - To create the docker image: docker build -t broker .
 - To run the docker image: docker run -it -e NAME=queue -p 5000:8000 broker 
+
+
+Work to do 
+- Run the raft process for each broker as a new process
+- Obtain the port id of the broker and the raft process for the tcp connection
+- Update broker manager to call dummy functions

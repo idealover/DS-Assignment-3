@@ -4,11 +4,46 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from .queue_funcs import *
 
-def Topics(request):
+import subprocess
+import os
+import time
+import socket
+import struct
+import ast
+
+# run the raft server as a different process
+# 
+# 
+# 
+
+
+def dummyTopics(request):
+    final_resp = {'status':'failure'}
     if request.method == 'GET':
         final_resp = listTopics()
-        print(final_resp)
         return JsonResponse(final_resp)
+
+    elif request.method == 'POST':
+        # create the message dictinary
+        message = {'topic_name':request.POST.get('topic_name'), 'partition_no':int(request.POST.get('partition_no'))}
+        message = str(message)
+        message = str(3) + message
+        # get the broker port and raft port
+        broker_port = *
+        raft_port = *
+        message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
+        # send the message to the raft server
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(('localhost', raft_port))
+        sock.sendall(message_bytes)
+        sock.close()
+        Topics(request)
+
+def Topics(request):
+    # if request.method == 'GET':
+    #     final_resp = listTopics()
+    #     print(final_resp)
+    #     return JsonResponse(final_resp)
 
     elif request.method == 'POST':
         final_resp = {'status':'message'}
@@ -20,6 +55,22 @@ def Topics(request):
             print("Creating the topic")
             final_resp = createTopic(request.POST.get('topic_name'), int(request.POST.get('partition_no')))
             return JsonResponse(final_resp)
+
+def dummyRegisterConsumer(request):
+    # create the message dictinary
+    message = {'topic_name':request.POST.get('topic_name'), 'consumer_id':int(request.POST.get('consumer_id'))}
+    message = str(message)
+    message = str(2) + message
+    # get the broker port and raft port
+    broker_port = *
+    raft_port = *
+    message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
+    # send the message to the raft server
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect(('localhost', raft_port))
+    sock.sendall(message_bytes)
+    sock.close()
+    registerConsumer(request)
 
 def registerConsumer(request):
     final_resp = {'status':'failure'}
@@ -52,6 +103,22 @@ def registerProducer(request):
     final_resp['message'] = 'GET method not supported for this endpoint'
     return JsonResponse(final_resp)
 
+def dummyEnqueue(request):
+    # create the message dictinary
+    message = {'topic_name':request.POST.get('topic_name'), 'message':request.POST.get('message'), 'partition_no':int(request.POST.get('partition_no'))}
+    message = str(message)
+    message = str(0) + message
+    # get the broker port and raft port
+    broker_port = *
+    raft_port = *
+    message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
+    # send the message to the raft server
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect(('localhost', raft_port))
+    sock.sendall(message_bytes)
+    sock.close()
+    enqueue(request)
+
 def enqueue(request):
     final_resp = {'status':'failure'}
     if request.method == 'POST':
@@ -75,6 +142,22 @@ def enqueue(request):
 
     final_resp['message'] = 'GET method not supported for this endpoint'
     return JsonResponse(final_resp)
+
+def dummyDequeue(request):
+    # create the message dictinary
+    message = {'topic_name':request.GET.get('topic_name'), 'consumer_id':int(request.GET.get('consumer_id')), 'partition_no':int(request.GET.get('partition_no'))}
+    message = str(message)
+    message = str(1) + message
+    # get the broker port and raft port
+    broker_port = *
+    raft_port = *
+    message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
+    # send the message to the raft server
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect(('localhost', raft_port))
+    sock.sendall(message_bytes)
+    sock.close()
+    dequeue(request)
 
 def dequeue(request):
     final_resp = {'status':'failure'}
