@@ -16,6 +16,10 @@ import ast
 # 
 # 
 
+# Design decision: The raft server will be run as a different process
+# Design decision: The raft server will be run on a different port than the broker
+# The port number of the raft server will be the port number of the broker + 1000
+
 
 def dummyTopics(request):
     final_resp = {'status':'failure'}
@@ -31,6 +35,7 @@ def dummyTopics(request):
         # get the broker port and raft port
         broker_port = os.environ.get('PORT')
         raft_port = broker_port+1000
+        
         message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
         # send the message to the raft server
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -45,7 +50,7 @@ def Topics(request):
     #     print(final_resp)
     #     return JsonResponse(final_resp)
 
-    elif request.method == 'POST':
+    if request.method == 'POST':
         final_resp = {'status':'message'}
         if request.POST.get('topic_name') == None:
             final_resp['status'] = "failure"

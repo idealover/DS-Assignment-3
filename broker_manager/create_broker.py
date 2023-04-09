@@ -11,7 +11,7 @@ def run_broker_container(broker_id: int):
 def create_database(id: int):
     con = psycopg2.connect(dbname='queue',
         user='postgres', host='localhost',
-        password='eshamanideep25')
+        password='kgpian')
 
     con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT) # <-- ADD THIS LINE
 
