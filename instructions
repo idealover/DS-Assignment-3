@@ -1,0 +1,5 @@
+To rebuild the docker image, do "sudo docker build -t broker ." in the DS_Assign_1 folder
+To run the broekrs, do "python3 create_broker.py 1" etc in broker_manager folder
+
+
+

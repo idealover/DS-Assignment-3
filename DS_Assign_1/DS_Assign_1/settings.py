@@ -81,9 +81,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': os.environ.get('NAME'),
-        # 'NAME': 'queue2',
+        # 'NAME': 'queue',
         'USER': 'postgres',
-        'PASSWORD': 'eshamanideep25',
+        'PASSWORD': 'kgpian',
         'HOST': 'host.docker.internal',
         # 'HOST': 'localhost',
         'PORT': 5432,
