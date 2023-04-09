@@ -8,7 +8,8 @@ import docker
 import os
 import multiprocessing
 
-MAX_SIZE = 10
+MAX_SIZE = 1000
+RObjPort = 10000
 
 class Redirector():
     #A class that redirects all the messages to the appropriate brokers
@@ -156,31 +157,68 @@ class Redirector():
         # partition_id starts at 0, and is sequential
         partition_id = len(Partition_Model.query.filter_by(topic_name = topic_name).all()) +1
         self._metadata[topic_name].add_partition(partition_id)
-        #Now allocate a broker to the partition 
-        broker_number = 0
-        broker_size = MAX_SIZE # This needs to be set
+        # Now allocate a broker to the partition 
+        # Choose 3 brokers with the least number of partitions
+        broker_numbers = [0,1,2]
+        broker_sizes = [MAX_SIZE, MAX_SIZE, MAX_SIZE] # initialize with maximum values
         with self._lock:
             for broker_id in self._broker.keys():
-                if self._broker[broker_id] < broker_size:
-                    broker_size = self._broker[broker_id]
-                    broker_number = broker_id
+                partitions = self._broker[broker_id]
+                if partitions < broker_sizes[0]:
+                    # shift the current brokers down the list
+                    broker_sizes[2] = broker_sizes[1]
+                    broker_numbers[2] = broker_numbers[1]
+                    broker_sizes[1] = broker_sizes[0]
+                    broker_numbers[1] = broker_numbers[0]
+                    # insert the new broker at the top of the list
+                    broker_sizes[0] = partitions
+                    broker_numbers[0] = broker_id
+                elif partitions < broker_sizes[1]:
+                    # shift the current brokers down the list
+                    broker_sizes[2] = broker_sizes[1]
+                    broker_numbers[2] = broker_numbers[1]
+                    # insert the new broker in the middle of the list
+                    broker_sizes[1] = partitions
+                    broker_numbers[1] = broker_id
+                elif partitions < broker_sizes[2]:
+                    # insert the new broker at the bottom of the list
+                    broker_sizes[2] = partitions
+                    broker_numbers[2] = broker_id
+
+        # broker_numbers now contains the IDs of the 3 brokers with the least partitions
+
+        # broker_number = 0
+        # broker_size = MAX_SIZE # This needs to be set
+        # with self._lock:
+        #     for broker_id in self._broker.keys():
+        #         if self._broker[broker_id] < broker_size:
+        #             broker_size = self._broker[broker_id]
+        #             broker_number = broker_id
         
-        if broker_size == MAX_SIZE:
-            # broker_number = self.add_broker()
-            print("Broker Overload : Please create new broker")
+        # if broker_size == MAX_SIZE:
+        #     # broker_number = self.add_broker()
+        #     print("Broker Overload : Please create new broker")
 
-        #Add the partition to the broker
-        self._broker[broker_number] += 1
-        newLink = get_link(broker_number) + "dummy/topics"
-        # print(newLink)
-        _params = {"topic_name":topic_name, "partition_no" : partition_id}
-        resp = requests.post(newLink, json = _params, data = _params)
+        # Add the partition to the brokers
+        # 
+        ports = [RObjPort, RObjPort + 1, RObjPort + 2]
+        for i in range(3):
+            broker_number = broker_numbers[i]
+            port = ports[i]
+            # The 2 other ports are peers
+            peers = [ports[(i+1)%3], ports[(i+2)%3]]
+            self._broker[broker_number] += 1
+            newLink = get_link(broker_number) + "dummy/topics"
+            # print(newLink)
+            _params = {"topic_name":topic_name, "partition_no" : partition_id, "port" : port, "peers" : peers}
+            resp = requests.post(newLink, json = _params, data = _params)
 
-        for consumer in Consumer_Model.query.filter_by(topic_name = topic_name).all():
-            #Inform the broker about the new consumer
-            newLink = get_link(broker_number) + "dummy/consumer/register"
-            _params = {"topic_name" : topic_name, "consumer_id": consumer.id}
-            requests.post(newLink, data = _params)
+        for broker_number in broker_numbers:
+            for consumer in Consumer_Model.query.filter_by(topic_name = topic_name).all():
+                #Inform the broker about the new consumer
+                newLink = get_link(broker_number) + "dummy/consumer/register"
+                _params = {"topic_name" : topic_name, "consumer_id": consumer.id}
+                requests.post(newLink, data = _params)
 
 
         if resp.json()['status'] == "success":

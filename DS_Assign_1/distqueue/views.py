@@ -29,7 +29,7 @@ def dummyTopics(request):
 
     elif request.method == 'POST':
         # create the message dictinary
-        message = {'topic_name':request.POST.get('topic_name'), 'partition_no':int(request.POST.get('partition_no'))}
+        message = {'topic_name':request.POST.get('topic_name'), 'partition_no':int(request.POST.get('partition_no')), 'port':int(request.POST.get('port')), 'peers':request.POST.get('peers')}
         message = str(message)
         message = str(3) + message
         # get the broker port and raft port
@@ -42,7 +42,7 @@ def dummyTopics(request):
         sock.connect(('localhost', raft_port))
         sock.sendall(message_bytes)
         sock.close()
-        Topics(request)
+        # Topics(request)
 
 def Topics(request):
     # if request.method == 'GET':
@@ -75,7 +75,7 @@ def dummyRegisterConsumer(request):
     sock.connect(('localhost', raft_port))
     sock.sendall(message_bytes)
     sock.close()
-    registerConsumer(request)
+    # registerConsumer(request)
 
 def registerConsumer(request):
     final_resp = {'status':'failure'}
@@ -122,7 +122,7 @@ def dummyEnqueue(request):
     sock.connect(('localhost', raft_port))
     sock.sendall(message_bytes)
     sock.close()
-    enqueue(request)
+    # enqueue(request)
 
 def enqueue(request):
     final_resp = {'status':'failure'}
@@ -162,7 +162,7 @@ def dummyDequeue(request):
     sock.connect(('localhost', raft_port))
     sock.sendall(message_bytes)
     sock.close()
-    dequeue(request)
+    # dequeue(request)
 
 def dequeue(request):
     final_resp = {'status':'failure'}

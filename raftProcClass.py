@@ -190,8 +190,10 @@ class raftProc:
                 # add topic
                 topic = message['topic']
                 partition_id = message['partition_id']
+                port = message['port']
+                peers = message['peers']
                 newLink = get_link(self.broker) + "/topics" #Link for adding a topic
-                _params = {"topic_name":topic_name, "partition_no" : partition_id}
+                _params = {"topic_name":topic_name, "partition_no" : partition_id, "port" : port, "peers" : peers}
                 requests.post(newLink, json = _params, data = _params)
 
             elif flag == 4:
