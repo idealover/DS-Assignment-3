@@ -18,7 +18,7 @@ import ast
 
 # Design decision: The raft server will be run as a different process
 # Design decision: The raft server will be run on a different port than the broker
-# The port number of the raft server will be the port number of the broker + 1000
+# The port number of the raft server will be 9000
 
 
 def dummyTopics(request):
@@ -34,7 +34,7 @@ def dummyTopics(request):
         message = str(3) + message
         # get the broker port and raft port
         broker_port = os.environ.get('PORT')
-        raft_port = broker_port+1000
+        raft_port = 9000
         
         message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
         # send the message to the raft server
@@ -68,7 +68,7 @@ def dummyRegisterConsumer(request):
     message = str(2) + message
     # get the broker port and raft port
     broker_port = os.environ.get('PORT')
-    raft_port = broker_port+1000
+    raft_port = 9000
     message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
     # send the message to the raft server
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -115,7 +115,7 @@ def dummyEnqueue(request):
     message = str(0) + message
     # get the broker port and raft port
     broker_port = os.environ.get('PORT')
-    raft_port = broker_port+1000
+    raft_port = 9000
     message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
     # send the message to the raft server
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -155,7 +155,7 @@ def dummyDequeue(request):
     message = str(1) + message
     # get the broker port and raft port
     broker_port = os.environ.get('PORT')
-    raft_port = broker_port+1000
+    raft_port = 9000
     message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
     # send the message to the raft server
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
