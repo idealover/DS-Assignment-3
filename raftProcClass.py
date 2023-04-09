@@ -182,6 +182,7 @@ class raftProc:
                 # add consumer
                 topic = message['topic']
                 consumer_id = message['consumer_id']
+                partition_id = message['partition_id']
                 newLink = get_link(self.broker) + "/consumer/register" #Link for adding a consumer to a particular topic
                 _params = {"topic_name" : topic_name, "consumer_id": consumer_id}
                 requests.post(newLink, data = _params, json = _params, params = _params)

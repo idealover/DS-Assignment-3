@@ -62,8 +62,8 @@ def Topics(request):
             return JsonResponse(final_resp)
 
 def dummyRegisterConsumer(request):
-    # create the message dictinary
-    message = {'topic_name':request.POST.get('topic_name'), 'consumer_id':int(request.POST.get('consumer_id'))}
+    # create the message dictionary
+    message = {'topic_name':request.POST.get('topic_name'), 'consumer_id':int(request.POST.get('consumer_id')), 'partition_id':int(request.POST.get('partition_id'))}
     message = str(message)
     message = str(2) + message
     # get the broker port and raft port

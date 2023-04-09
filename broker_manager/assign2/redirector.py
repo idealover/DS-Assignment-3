@@ -220,6 +220,7 @@ class Redirector():
                 _params = {"topic_name" : topic_name, "consumer_id": consumer.id}
                 requests.post(newLink, data = _params)
 
+        RObjPort+=3
 
         if resp.json()['status'] == "success":
             db.session.add(Partition_Model(topic_name = topic_name, partition_number = partition_id, broker = broker_number))
@@ -248,7 +249,7 @@ class Redirector():
         for partition in Partition_Model.query.filter_by(topic_name = topic_name).all():
             #Inform the broker about the new consumer
             newLink = get_link(partition.broker) + "/dummy/consumer/register"
-            _params = {"topic_name" : topic_name, "consumer_id": consumer_id}
+            _params = {"topic_name" : topic_name, "consumer_id": consumer_id, "partition_id" : partition.id}
             requests.post(newLink, data = _params)
 
         return consumer_id
