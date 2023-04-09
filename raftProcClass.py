@@ -160,7 +160,7 @@ class raftProc:
             message = ast.literal_eval(message)
             if flag == 0:
                 # enqueue
-                topic = message['topic']
+                topic_name = message['topic']
                 partition_id = message['partition_id']
                 message = message['message']
                 newLink = get_link(self.broker) + "/producer/produce" #Link for publishing to the specific partition of a particular topic 
@@ -170,7 +170,7 @@ class raftProc:
 
             elif flag == 1:
                 # dequeue
-                topic = message['topic']
+                topic_name = message['topic']
                 partition_id = message['partition_id']
                 consumer_id = message['consumer_id']
                 newLink = get_link(self.broker) + "/consumer/consume" #Link for consuming from the specific partition of a particular topic
@@ -180,7 +180,7 @@ class raftProc:
 
             elif flag == 2:
                 # add consumer
-                topic = message['topic']
+                topic_name = message['topic']
                 consumer_id = message['consumer_id']
                 partition_id = message['partition_id']
                 newLink = get_link(self.broker) + "/consumer/register" #Link for adding a consumer to a particular topic
@@ -189,7 +189,7 @@ class raftProc:
 
             elif flag == 3:
                 # add topic
-                topic = message['topic']
+                topic_name = message['topic']
                 partition_id = message['partition_id']
                 port = message['port']
                 peers = message['peers']
