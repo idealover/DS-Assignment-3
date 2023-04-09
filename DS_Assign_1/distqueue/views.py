@@ -29,8 +29,8 @@ def dummyTopics(request):
         message = str(message)
         message = str(3) + message
         # get the broker port and raft port
-        broker_port = *
-        raft_port = *
+        broker_port = os.environ.get('PORT')
+        raft_port = broker_port+1000
         message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
         # send the message to the raft server
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -62,8 +62,8 @@ def dummyRegisterConsumer(request):
     message = str(message)
     message = str(2) + message
     # get the broker port and raft port
-    broker_port = *
-    raft_port = *
+    broker_port = os.environ.get('PORT')
+    raft_port = broker_port+1000
     message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
     # send the message to the raft server
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -109,8 +109,8 @@ def dummyEnqueue(request):
     message = str(message)
     message = str(0) + message
     # get the broker port and raft port
-    broker_port = *
-    raft_port = *
+    broker_port = os.environ.get('PORT')
+    raft_port = broker_port+1000
     message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
     # send the message to the raft server
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -149,8 +149,8 @@ def dummyDequeue(request):
     message = str(message)
     message = str(1) + message
     # get the broker port and raft port
-    broker_port = *
-    raft_port = *
+    broker_port = os.environ.get('PORT')
+    raft_port = broker_port+1000
     message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
     # send the message to the raft server
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

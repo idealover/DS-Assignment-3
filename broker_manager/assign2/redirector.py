@@ -171,14 +171,14 @@ class Redirector():
 
         #Add the partition to the broker
         self._broker[broker_number] += 1
-        newLink = get_link(broker_number) + "/topics"
+        newLink = get_link(broker_number) + "dummy/topics"
         # print(newLink)
         _params = {"topic_name":topic_name, "partition_no" : partition_id}
         resp = requests.post(newLink, json = _params, data = _params)
 
         for consumer in Consumer_Model.query.filter_by(topic_name = topic_name).all():
             #Inform the broker about the new consumer
-            newLink = get_link(broker_number) + "/consumer/register"
+            newLink = get_link(broker_number) + "dummy/consumer/register"
             _params = {"topic_name" : topic_name, "consumer_id": consumer.id}
             requests.post(newLink, data = _params)
 
@@ -209,7 +209,7 @@ class Redirector():
         #Now let the other brokers subscribed to this specific topic know about the new consumer
         for partition in Partition_Model.query.filter_by(topic_name = topic_name).all():
             #Inform the broker about the new consumer
-            newLink = get_link(partition.broker) + "/consumer/register"
+            newLink = get_link(partition.broker) + "/dummy/consumer/register"
             _params = {"topic_name" : topic_name, "consumer_id": consumer_id}
             requests.post(newLink, data = _params)
 
@@ -256,7 +256,7 @@ class Redirector():
         #Now send the add request to the appropriate broker 
         # print("Hey")
         partition = Partition_Model.query.filter_by(topic_name = topic_name, partition_number = partition_no).first()
-        newLink = get_link(partition.broker) + "/producer/produce" #Link for publishing to the specific partition of a particular topic 
+        newLink = get_link(partition.broker) + "/dummy/producer/produce" #Link for publishing to the specific partition of a particular topic 
         # _params = {"topic_name" : topic_name} #Complete this part as well
         _params = {"topic_name" : topic_name, "partition_no" : partition_no, "message" : message}
         # print(_params)
@@ -300,7 +300,7 @@ class Redirector():
                 min_time = log_msg[partition]['created']
                 partition_no = partition
         # print(partition_no)
-        newLink = get_link(partition_no.broker) + "/consumer/consume"
+        newLink = get_link(partition_no.broker) + "/dummy/consumer/consume"
         _params = {"topic_name" : topic_name, "partition_no" : partition_no.partition_number, "consumer_id" : consumer_id}
         return requests.get(newLink, data = _params, params = _params, json = _params).json()['message']
         
