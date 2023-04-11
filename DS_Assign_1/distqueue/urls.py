@@ -14,4 +14,5 @@ urlpatterns = [
     path('consumer/probe',views.probe),
     path('size',views.size),
     path('health', views.health),
+    path('get_data', views.get_data),
 ]

@@ -15,6 +15,23 @@ class raftProc:
         self.port = port
         self.broker = broker
         self.raftObjects = {}
+
+        # call url of broker to get the information about the topics and partitions
+        newLink = get_link(self.broker) + "/get_data"
+        _params = {}
+        try:
+            resp = requests.get(newLink, json = _params, data = _params, timeout = 2)
+            # do whatever you want with the response
+            for partitions in resp['data']:
+                peers = [partitions['peer1'], partitions['peer2']]
+                topic_name = partitions['topic']
+                partition_id = partitions['partition_id']
+                key = str(topic_name) + "_" + str(partition_id)
+                msg_dict = {'peers': peers, 'port': partitions['port']}
+                self.add_topic(key, msg_dict)
+        except:
+            print("The request timed out: Broker "+str(self.broker)+" is not responding !")
+            exit()
         
         self.server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_sock.bind(('localhost', self.port))

@@ -12,6 +12,9 @@
 import sys
 import os
 
+# import the raft process class
+from raftProcClass import RaftProc
+
 if len(sys.argv) < 4:
     print('Usage: python raftproc.py port broker peers [log_file]')
     sys.exit(1)
@@ -27,9 +30,6 @@ else:
 
 # add the current directory to the path
 sys.path.append(os.getcwd())
-
-# import the raft process class
-from raftprocClass import RaftProc
 
 # spawn the process
 # redirect the output to the log file

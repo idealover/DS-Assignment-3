@@ -225,3 +225,9 @@ def probe(request):
 def health(request):
     final_resp = {'status':'alive'}
     return JsonResponse(final_resp)
+
+def get_data(request):
+    final_resp = {'status':'failure'}
+    if request.method == 'GET':
+        final_resp = qget_data()
+        return JsonResponse(final_resp)

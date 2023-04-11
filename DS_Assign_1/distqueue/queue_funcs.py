@@ -231,3 +231,13 @@ def qprobe(topic, cid, partition_no):
 
     ret_dict['status'] = "success"
     return ret_dict
+
+def qget_data():
+    # return all the data in the database partitionReplicaData
+    ret_dict = {'status':'failure'}
+    ret_dict['data'] = []
+    # get all data in the table partitionReplicaData into a dictionary
+    for data in partitionReplicaData.objects.all():
+        ret_dict['data'].append({'topic':data.topic_m.topic_name, 'partition_id' : data.topic_m.partition_number, 'port':data.my_port, 'peer1':data.peer1, 'peer2':data.peer2})
+    ret_dict['status'] = 'success'
+    return ret_dict
