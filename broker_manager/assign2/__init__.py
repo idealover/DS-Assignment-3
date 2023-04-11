@@ -43,8 +43,8 @@ with app.app_context():
         print("Development environment turned on")
         
     # thread1 = thread("HealthCheck", 1000)
-    # thread1 = threading.Thread(target=healthCheck, args=(redirector,))
-    # thread1.start()
+    thread1 = threading.Thread(target=healthCheck, args=(redirector,))
+    thread1.start()
 
     # thread1.join()
     

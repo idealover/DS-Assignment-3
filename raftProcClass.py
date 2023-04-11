@@ -5,6 +5,10 @@ import time
 import ast
 import requests
 
+from requests.exceptions import Timeout
+from requests.exceptions import ConnectionError
+from broker_manager.assign2.utility_funcs import get_link
+
 class raftProc:
     def __init__(self, id, port, peers, broker):
         self.id = id
@@ -26,6 +30,23 @@ class raftProc:
 
         self.recv_thread = threading.Thread(target=self.recv_messages)
         self.recv_thread.start()
+
+        # thread for checking if the broker is alive
+        self.broker_thread = threading.Thread(target=self.check_broker)
+        self.broker_thread.start()
+
+    # check if the broker is alive
+    def check_broker(self):
+        while True:
+            newLink = get_link(self.broker) + "/health"
+            # print(newLink)
+            _params = {}
+            try:
+                resp = requests.post(newLink, json = _params, data = _params, timeout = 2)
+                time.sleep(15)
+            except requests.exceptions.Timeout:
+                print("The request timed out: Broker "+str(self.broker)+" is not responding !")
+                exit()
 
     # add a new peer to the list of peers
     def add_peer(self, peer):
@@ -127,6 +148,7 @@ class raftProc:
             # if the message is from a peer, handle it
             else:
                 self.handle_peer_message(message_bytes)
+        client_sock.close()
 
     def handle_broker_message(self, message_bytes):
         # check if the message is enqueue or dequeue
@@ -204,5 +226,3 @@ class raftProc:
 
             print(f"Received message from {sender_port}: {message}")
             # add return statement as requrired here
-
-            client_sock.close()
