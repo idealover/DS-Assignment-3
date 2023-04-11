@@ -38,3 +38,9 @@ class ConsumerViews(models.Model):
     #To store which consumer viewed which topic
     viewed_log = models.ForeignKey(LogMessage, related_name = 'viewed_log', on_delete = models.CASCADE)
     user = models.ForeignKey(Consumer, related_name = 'user_cv', on_delete = models.CASCADE)
+
+class partitionReplicaData(models.Model):
+    topic_m = models.ForeignKey(Topic, related_name = 'topic_name_prd', on_delete = models.CASCADE)
+    my_port = models.PositiveIntegerField()
+    peer1 = models.PositiveIntegerField()
+    peer2 = models.PositiveIntegerField()
