@@ -108,7 +108,7 @@ class raftProc:
         peerports = []
         for x in message['peers']:
             peerports.append("localhost:" + str(x))
-        self[raftObjects][key] = raftObj(selfport,peerports, self.broker)
+        self.raftObjects[key] = raftObj(selfport,peerports, self.broker)
 
     # send a message to all peers
     # boolean flag to indicate if the message is enqueue or dequeue
