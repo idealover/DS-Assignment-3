@@ -4,11 +4,19 @@ import struct
 import time
 import ast
 import requests
+from pysyncobj import SyncObj, SyncObjConf, replicated_sync
+import os
 
 from requests.exceptions import Timeout
 from requests.exceptions import ConnectionError
-import broker_manager
-from broker_manager.assign2.utility_funcs import get_link
+# import broker_manager
+# from assign2.utility_funcs import get_link
+
+def get_link(port:int) -> str:
+    base = "http://127.0.0.1:"
+    base += str(port)
+    # base += "/"
+    return base
 
 class raftProc:
     def __init__(self, id, port, broker):
@@ -23,19 +31,20 @@ class raftProc:
         try:
             resp = requests.get(newLink, json = _params, data = _params, timeout = 2)
             # do whatever you want with the response
-            for partitions in resp['data']:
+            for partitions in resp.json()['data']:
                 peers = [partitions['peer1'], partitions['peer2']]
                 topic_name = partitions['topic']
                 partition_id = partitions['partition_id']
                 key = str(topic_name) + "_" + str(partition_id)
                 msg_dict = {'peers': peers, 'port': partitions['port']}
                 self.add_topic(key, msg_dict)
-        except:
+        except Exception as e:
+            # print(e.message, e.args)
             print("The request timed out: Broker "+str(self.broker)+" is not responding !")
-            exit()
+            # os._exit()
         
         self.server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_sock.bind(('localhost', self.port))
+        self.server_sock.bind(('0.0.0.0', self.port))
         self.server_sock.listen(1)
 
         # send a message to all peers to add this process to their list of peers
@@ -61,10 +70,10 @@ class raftProc:
             _params = {}
             try:
                 resp = requests.post(newLink, json = _params, data = _params, timeout = 2)
-                time.sleep(15)
+                time.sleep(2)
             except requests.exceptions.Timeout:
                 print("The request timed out: Broker "+str(self.broker)+" is not responding !")
-                exit()
+                os._exit()
 
     # add a new peer to the list of peers
     def add_peer(self, peer):
@@ -165,11 +174,10 @@ class raftProc:
             message_bytes = client_sock.recv(1024)
             sender_port = struct.unpack('>i', message_bytes[:4])[0]
             # if the message is from the broker, handle it
+            print(sender_port)
             if sender_port == self.broker:
                 self.handle_broker_message(message_bytes)
             # if the message is from a peer, handle it
-            else:
-                self.handle_peer_message(message_bytes)
         client_sock.close()
 
     def handle_broker_message(self, message_bytes):

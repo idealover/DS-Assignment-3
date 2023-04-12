@@ -8,8 +8,8 @@ import docker
 import os
 import multiprocessing
 
-MAX_SIZE = 1000
-RObjPort = 10000
+
+
 
 class Redirector():
     #A class that redirects all the messages to the appropriate brokers
@@ -20,6 +20,8 @@ class Redirector():
         self._metadata: Dict[str, Topic] = {}
         self._broker: Dict[int, int] = {}
         self._ids = []
+        self.RObjPort = 10000
+        self.MAX_SIZE = 1000
 
 
     def sync_with_db(self) -> None: 
@@ -160,7 +162,7 @@ class Redirector():
         # Now allocate a broker to the partition 
         # Choose 3 brokers with the least number of partitions
         broker_numbers = [0,1,2]
-        broker_sizes = [MAX_SIZE, MAX_SIZE, MAX_SIZE] # initialize with maximum values
+        broker_sizes = [self.MAX_SIZE, self.MAX_SIZE, self.MAX_SIZE] # initialize with maximum values
         with self._lock:
             for broker_id in self._broker.keys():
                 partitions = self._broker[broker_id]
@@ -188,27 +190,27 @@ class Redirector():
         # broker_numbers now contains the IDs of the 3 brokers with the least partitions
 
         # broker_number = 0
-        # broker_size = MAX_SIZE # This needs to be set
+        # broker_size = self.MAX_SIZE # This needs to be set
         # with self._lock:
         #     for broker_id in self._broker.keys():
         #         if self._broker[broker_id] < broker_size:
         #             broker_size = self._broker[broker_id]
         #             broker_number = broker_id
         
-        # if broker_size == MAX_SIZE:
+        # if broker_size == self.MAX_SIZE:
         #     # broker_number = self.add_broker()
         #     print("Broker Overload : Please create new broker")
 
         # Add the partition to the brokers
         # 
-        ports = [RObjPort, RObjPort + 1, RObjPort + 2]
+        ports = [self.RObjPort, self.RObjPort + 1, self.RObjPort + 2]
         for i in range(3):
             broker_number = broker_numbers[i]
             port = ports[i]
             # The 2 other ports are peers
             peers = [ports[(i+1)%3], ports[(i+2)%3]]
             self._broker[broker_number] += 1
-            newLink = get_link(broker_number) + "dummy/topics"
+            newLink = get_link(broker_number) + "/dummy/topics"
             # print(newLink)
             _params = {"topic_name":topic_name, "partition_no" : partition_id, "port" : port, "peers" : peers}
             resp = requests.post(newLink, json = _params, data = _params)
@@ -216,11 +218,11 @@ class Redirector():
         for broker_number in broker_numbers:
             for consumer in Consumer_Model.query.filter_by(topic_name = topic_name).all():
                 #Inform the broker about the new consumer
-                newLink = get_link(broker_number) + "dummy/consumer/register"
+                newLink = get_link(broker_number) + "/dummy/consumer/register"
                 _params = {"topic_name" : topic_name, "consumer_id": consumer.id}
                 requests.post(newLink, data = _params)
 
-        RObjPort+=3
+        self.RObjPort+=3
 
         if resp.json()['status'] == "success":
             db.session.add(Partition_Model(topic_name = topic_name, partition_number = partition_id, broker = broker_number))

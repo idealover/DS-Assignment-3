@@ -6,14 +6,16 @@ import os
 
 def run_broker_container(broker_id: int):
     client = docker.from_env()
-    env_str = "NAME=queue"+str(broker_id)
-    ports = {'8000/tcp':broker_id}
-    cont = client.containers.run('broker', environment = [env_str], ports = ports)
+    env_str = []
+    env_str.append("NAME=queue"+str(broker_id))
+    env_str.append("PORT="+str(broker_id))
+    ports = {'8000/tcp':broker_id, '9000/tcp':broker_id + 2000}
+    cont = client.containers.run('broker', environment = env_str, ports = ports)
 
 def create_database(id: int):
     con = psycopg2.connect(dbname='queue',
         user='postgres', host='localhost',
-        password='kgpian')
+        password='eshamanideep25')
 
     con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT) # <-- ADD THIS LINE
 
@@ -32,11 +34,12 @@ def create_database(id: int):
 
 #Create the database and then 
 
-
-pid = os.fork()
-if pid > 0 :
-    create_database(int(sys.argv[1]))
-    run_broker_container(int(sys.argv[1]))
-else :
-    broker = int(sys.argv[1])
-    obj = raftProc(broker + 2000, broker + 2000, broker)
+create_database(int(sys.argv[1]))
+run_broker_container(int(sys.argv[1]))
+# pid = os.fork()
+# if pid > 0 :
+#     create_database(int(sys.argv[1]))
+#     run_broker_container(int(sys.argv[1]))
+# else :
+#     broker = int(sys.argv[1])
+#     obj = raftProc(broker + 2000, broker + 2000, broker)

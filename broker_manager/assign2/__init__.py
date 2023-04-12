@@ -1,10 +1,28 @@
 from flask import Flask 
 from flask_sqlalchemy import SQLAlchemy 
 
-# import config_ff
+class configuration:
+    """base virual class"""
+
+class production_config(configuration):
+    FLASK_ENV = "production"
+    SQLALCHEMY_DATABASE_URI = (
+        "postgresql://postgres:eshamanideep25@localhost:5432/broker_manager"
+    )
+    DEBUG = False
+    TESTING = False
+
+
+class development_config(configuration):
+    FLASK_ENV = "development"
+    SQLALCHEMY_DATABASE_URI = (
+        "postgresql://postgres:eshamanideep25@localhost:5432/broker_manager"
+    )
+    DEBUG = True
+    TESTING = True
 
 app = Flask(__name__)
-app.config.from_object(config.development_config)
+app.config.from_object(development_config)
 db = SQLAlchemy(app)
 from .models import *
 
@@ -43,8 +61,8 @@ with app.app_context():
         print("Development environment turned on")
         
     # thread1 = thread("HealthCheck", 1000)
-    thread1 = threading.Thread(target=healthCheck, args=(redirector,))
-    thread1.start()
+    # thread1 = threading.Thread(target=healthCheck, args=(redirector,))
+    # thread1.start()
 
     # thread1.join()
     

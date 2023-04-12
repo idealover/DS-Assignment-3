@@ -33,13 +33,13 @@ def dummyTopics(request):
         message = str(message)
         message = str(3) + message
         # get the broker port and raft port
-        broker_port = os.environ.get('PORT')
+        broker_port = int(os.environ.get('PORT'))
         raft_port = 9000
         
         message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
         # send the message to the raft server
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect(('localhost', raft_port))
+        sock.connect(('host.docker.internal', raft_port))
         sock.sendall(message_bytes)
         sock.close()
         # Topics(request)
@@ -67,7 +67,7 @@ def dummyRegisterConsumer(request):
     message = str(message)
     message = str(2) + message
     # get the broker port and raft port
-    broker_port = os.environ.get('PORT')
+    broker_port = int(os.environ.get('PORT'))
     raft_port = 9000
     message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
     # send the message to the raft server
@@ -114,7 +114,7 @@ def dummyEnqueue(request):
     message = str(message)
     message = str(0) + message
     # get the broker port and raft port
-    broker_port = os.environ.get('PORT')
+    broker_port = int(os.environ.get('PORT'))
     raft_port = 9000
     message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
     # send the message to the raft server
@@ -154,7 +154,7 @@ def dummyDequeue(request):
     message = str(message)
     message = str(1) + message
     # get the broker port and raft port
-    broker_port = os.environ.get('PORT')
+    broker_port = int(os.environ.get('PORT'))
     raft_port = 9000
     message_bytes = struct.pack('>i', broker_port) + message.encode('utf-8')
     # send the message to the raft server
