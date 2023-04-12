@@ -7,6 +7,7 @@ import requests
 
 from requests.exceptions import Timeout
 from requests.exceptions import ConnectionError
+import broker_manager
 from broker_manager.assign2.utility_funcs import get_link
 
 class raftProc:

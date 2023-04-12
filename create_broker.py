@@ -1,6 +1,8 @@
 import docker, psycopg2, sys
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from psycopg2 import sql
+from raftProcClass import raftProc
+import os
 
 def run_broker_container(broker_id: int):
     client = docker.from_env()
@@ -29,5 +31,12 @@ def create_database(id: int):
         print("Database " + database_name + " already exists " + str(err))
 
 #Create the database and then 
-create_database(int(sys.argv[1]))
-run_broker_container(int(sys.argv[1]))
+
+
+pid = os.fork()
+if pid > 0 :
+    create_database(int(sys.argv[1]))
+    run_broker_container(int(sys.argv[1]))
+else :
+    broker = int(sys.argv[1])
+    obj = raftProc(broker + 2000, broker + 2000, broker)
