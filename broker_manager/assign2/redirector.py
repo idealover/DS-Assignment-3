@@ -7,6 +7,8 @@ from .utility_funcs import *
 import docker
 import os
 import multiprocessing
+import struct
+import socket
 
 
 
@@ -210,26 +212,76 @@ class Redirector():
             # The 2 other ports are peers
             peers = [ports[(i+1)%3], ports[(i+2)%3]]
             self._broker[broker_number] += 1
-            newLink = get_link(broker_number) + "/dummy/topics"
-            # print(newLink)
-            _params = {"topic_name":topic_name, "partition_no" : partition_id, "port" : port, "peers" : peers}
-            resp = requests.post(newLink, json = _params, data = _params)
+            # dont call dummy functions
+            # direct call to the raft process
+            raft_port = broker_number + 2000
+            # create the message
+            message = {'topic_name':topic_name, 'partition_no':partition_id, 'port':port, 'peers':peers}
+            message = str(message)
+            message = str(3) + message
+            
+            message_bytes = struct.pack('>i', broker_number) + message.encode('utf-8')
+            # send the message to the raft server
+            # using tcp socket
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect(('localhost', raft_port))
+            sock.sendall(message_bytes)
+            # wait for response
+            sock.listen(1)
+            conn, addr = sock.accept()
+            with conn:
+                data = conn.recv(1024)
+                # print(data)
+            sock.close()
+            # decode the response
+            data = data.decode('utf-8')
+            if data != "success":
+                print("Error in creating partition")
+                # raise Exception("Error in creating partition")
+                return "Error in creating partition"
+            # newLink = get_link(broker_number) + "/dummy/topics"
+            # # print(newLink)
+            # _params = {"topic_name":topic_name, "partition_no" : partition_id, "port" : port, "peers" : peers}
+            # resp = requests.post(newLink, json = _params, data = _params)
 
         for broker_number in broker_numbers:
             for consumer in Consumer_Model.query.filter_by(topic_name = topic_name).all():
-                #Inform the broker about the new consumer
-                newLink = get_link(broker_number) + "/dummy/consumer/register"
-                _params = {"topic_name" : topic_name, "consumer_id": consumer.id}
-                requests.post(newLink, data = _params)
+                # dont call dummy functions
+                # direct call to the raft process
+                raft_port = broker_number + 2000
+                # create the message
+                message = {'topic_name':topic_name, 'consumer_id':consumer.id, 'partition_id':partition_id}
+                message = str(message)
+                message = str(2) + message
+
+                message_bytes = struct.pack('>i', broker_number) + message.encode('utf-8')
+                # send the message to the raft server
+                # using tcp socket
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.connect(('localhost', raft_port))
+                sock.sendall(message_bytes)
+                sock.close()
+    
+                # #Inform the broker about the new consumer
+                # newLink = get_link(broker_number) + "/dummy/consumer/register"
+                # _params = {"topic_name" : topic_name, "consumer_id": consumer.id}
+                # requests.post(newLink, data = _params)
 
         self.RObjPort+=3
 
-        if resp.json()['status'] == "success":
+        # Check if the request was successful
+        # Change if condition to check if the request was successful
+        if data == "success":
             db.session.add(Partition_Model(topic_name = topic_name, partition_number = partition_id, broker = broker_number))
             db.session.commit()
-            return "success" 
+            return "success"
+        
+        # if resp.json()['status'] == "success":
+        #     db.session.add(Partition_Model(topic_name = topic_name, partition_number = partition_id, broker = broker_number))
+        #     db.session.commit()
+        #     return "success" 
 
-        print(resp.json())
+        print("['status'] == failure")
         return "failure"
 
 
@@ -249,10 +301,26 @@ class Redirector():
 
         #Now let the other brokers subscribed to this specific topic know about the new consumer
         for partition in Partition_Model.query.filter_by(topic_name = topic_name).all():
-            #Inform the broker about the new consumer
-            newLink = get_link(partition.broker) + "/dummy/consumer/register"
-            _params = {"topic_name" : topic_name, "consumer_id": consumer_id, "partition_id" : partition.id}
-            requests.post(newLink, data = _params)
+            # dont call dummy functions
+            # direct call to the raft process
+            raft_port = partition.broker + 2000
+            # create the message
+            message = {'topic_name':topic_name, 'consumer_id':consumer_id, 'partition_id':partition.partition_number}
+            message = str(message)
+            message = str(2) + message
+
+            message_bytes = struct.pack('>i', partition.broker) + message.encode('utf-8')
+            # send the message to the raft server
+            # using tcp socket
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect(('localhost', raft_port))
+            sock.sendall(message_bytes)
+            sock.close()
+
+            # #Inform the broker about the new consumer
+            # newLink = get_link(partition.broker) + "/dummy/consumer/register"
+            # _params = {"topic_name" : topic_name, "consumer_id": consumer_id, "partition_id" : partition.id}
+            # requests.post(newLink, data = _params)
 
         return consumer_id
 
@@ -297,11 +365,27 @@ class Redirector():
         #Now send the add request to the appropriate broker 
         # print("Hey")
         partition = Partition_Model.query.filter_by(topic_name = topic_name, partition_number = partition_no).first()
-        newLink = get_link(partition.broker) + "/dummy/producer/produce" #Link for publishing to the specific partition of a particular topic 
-        # _params = {"topic_name" : topic_name} #Complete this part as well
-        _params = {"topic_name" : topic_name, "partition_no" : partition_no, "message" : message}
-        # print(_params)
-        requests.post(newLink, data = _params, json = _params, params = _params)
+        # dont call dummy functions
+        # direct call to the raft process
+        raft_port = partition.broker + 2000
+        # create the message
+        message = {'topic_name':topic_name, 'message':message, 'partition_no':partition_no}
+        message = str(message)
+        message = str(0) + message
+
+        message_bytes = struct.pack('>i', partition.broker) + message.encode('utf-8')
+        # send the message to the raft server
+        # using tcp socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(('localhost', raft_port))
+        sock.sendall(message_bytes)
+        sock.close()
+        
+        # newLink = get_link(partition.broker) + "/dummy/producer/produce" #Link for publishing to the specific partition of a particular topic 
+        # # _params = {"topic_name" : topic_name} #Complete this part as well
+        # _params = {"topic_name" : topic_name, "partition_no" : partition_no, "message" : message}
+        # # print(_params)
+        # requests.post(newLink, data = _params, json = _params, params = _params)
 
 
     def get_log(self, topic_name: str, consumer_id: int):
@@ -341,10 +425,38 @@ class Redirector():
                 min_time = log_msg[partition]['created']
                 partition_no = partition
         # print(partition_no)
-        newLink = get_link(partition_no.broker) + "/dummy/consumer/consume"
-        _params = {"topic_name" : topic_name, "partition_no" : partition_no.partition_number, "consumer_id" : consumer_id}
-        return requests.get(newLink, data = _params, params = _params, json = _params).json()['message']
+        # dont call dummy functions
+        # direct call to the raft process
+        raft_port = partition_no.broker + 2000
+        # create the message
+        message = {'topic_name':topic_name, 'consumer_id':consumer_id, 'partition_no':partition_no}
+        message = str(message)
+        message = str(1) + message
         
+        message_bytes = struct.pack('>i', partition_no.broker) + message.encode('utf-8')
+        # send the message to the raft server
+        # using tcp socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(('localhost', raft_port))
+        sock.sendall(message_bytes)
+        # listen for the response from the raft server
+        # wait until the response is received
+        # print("Waiting for response")
+        sock.listen(1)
+        client, address = sock.accept()
+        with client:
+            # print("Response received")
+            response = client.recv(1024)
+        sock.close()
+        # response is a byte string
+        # convert it to a string, that is the dequeued message
+        response = response.decode('utf-8')
+        # print(response)
+        
+        # newLink = get_link(partition_no.broker) + "/dummy/consumer/consume"
+        # _params = {"topic_name" : topic_name, "partition_no" : partition_no.partition_number, "consumer_id" : consumer_id}
+        # return requests.get(newLink, data = _params, params = _params, json = _params).json()['message']
+        return response
 
     def add_broker(self, port_no: int):
         print("Add Broker")

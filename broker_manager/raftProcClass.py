@@ -123,7 +123,8 @@ class raftProc:
         # convert the message to a string
         # message_str = str(message)
         # send the message to all peers
-        return self.raftObjects[key].dequeue(message)
+        resp = self.raftObjects[key].dequeue(message)
+        return resp['message']
     
     # handle adding a consumer from a broker
     def add_consumer(self, key, message):
@@ -136,6 +137,7 @@ class raftProc:
         for x in message['peers']:
             peerports.append("localhost:" + str(x))
         self.raftObjects[key] = raftObj(selfport,peerports, self.broker)
+        return "success"
 
     # send a message to all peers
     # boolean flag to indicate if the message is enqueue or dequeue
@@ -171,12 +173,17 @@ class raftProc:
     def recv_messages(self):
         while True:
             client_sock, client_addr = self.server_sock.accept()
-            message_bytes = client_sock.recv(1024)
-            sender_port = struct.unpack('>i', message_bytes[:4])[0]
-            # if the message is from the broker, handle it
-            print(sender_port)
-            if sender_port == self.broker:
-                self.handle_broker_message(message_bytes)
+            with client_sock:
+                message_bytes = client_sock.recv(1024)
+                sender_port = struct.unpack('>i', message_bytes[:4])[0]
+                # if the message is from the broker, handle it
+                print(sender_port)
+                if sender_port == self.broker:
+                    resp = self.handle_broker_message(message_bytes)
+                    if resp is not None:
+                        # encode the response to bytes
+                        resp = resp.encode('utf-8')
+                        client_sock.sendall(resp)
             # if the message is from a peer, handle it
         client_sock.close()
 
@@ -192,13 +199,14 @@ class raftProc:
             self.enqueue(key,message)
         elif flag == 1:
             # dequeue
-            self.dequeue(key,message)
+            return self.dequeue(key,message)
         elif flag == 2:
             # add consumer
             self.add_consumer(key,message)
         elif flag == 3:
             # add topic
-            self.add_topic(key,message)
+            return self.add_topic(key,message)
+        return None
 
     # def handle_peer_message(self, message_bytes):
     #     # check if the message is from a peer

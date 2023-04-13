@@ -15,5 +15,6 @@
 
 
 Work to do 
-- Run the raft process for each broker as a new process
-- Obtain the port id of the broker and the raft process for the tcp connection
+- Check if connection should be to localhost or docker
+- if condition to check if partition was created
+- dequeue
