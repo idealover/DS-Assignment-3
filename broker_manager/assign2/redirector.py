@@ -77,6 +77,8 @@ class Redirector():
         db.session.add(Topic_Model(name = topic_name))
         db.session.commit()
 
+        print("Topic created successfully")
+
         #Create a first partition for the topic 
         self.create_partition(topic_name)
 
@@ -205,6 +207,7 @@ class Redirector():
 
         # Add the partition to the brokers
         # 
+
         ports = [self.RObjPort, self.RObjPort + 1, self.RObjPort + 2]
         for i in range(3):
             broker_number = broker_numbers[i]
@@ -216,19 +219,25 @@ class Redirector():
             # direct call to the raft process
             raft_port = broker_number + 2000
             # create the message
-            message = {'topic_name':topic_name, 'partition_no':partition_id, 'port':port, 'peers':peers}
+            message = {'topic':topic_name, 'partition_id':partition_id, 'port':port, 'peers':peers}
             message = str(message)
             message = str(3) + message
             
             message_bytes = struct.pack('>i', broker_number) + message.encode('utf-8')
+
             # send the message to the raft server
             # using tcp socket
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect(('localhost', raft_port))
             sock.sendall(message_bytes)
+            sock.close()
             # wait for response
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.bind(('localhost', 5050))
             sock.listen(1)
+            print("Listening for response")
             conn, addr = sock.accept()
+            print("Broker chosen : ", broker_number)
             with conn:
                 data = conn.recv(1024)
                 # print(data)
@@ -250,7 +259,7 @@ class Redirector():
                 # direct call to the raft process
                 raft_port = broker_number + 2000
                 # create the message
-                message = {'topic_name':topic_name, 'consumer_id':consumer.id, 'partition_id':partition_id}
+                message = {'topic':topic_name, 'consumer_id':consumer.id, 'partition_id':partition_id}
                 message = str(message)
                 message = str(2) + message
 
@@ -305,7 +314,7 @@ class Redirector():
             # direct call to the raft process
             raft_port = partition.broker + 2000
             # create the message
-            message = {'topic_name':topic_name, 'consumer_id':consumer_id, 'partition_id':partition.partition_number}
+            message = {'topic':topic_name, 'consumer_id':consumer_id, 'partition_id':partition.partition_number}
             message = str(message)
             message = str(2) + message
 
@@ -369,7 +378,7 @@ class Redirector():
         # direct call to the raft process
         raft_port = partition.broker + 2000
         # create the message
-        message = {'topic_name':topic_name, 'message':message, 'partition_no':partition_no}
+        message = {'topic':topic_name, 'message':message, 'partition_id':partition_no}
         message = str(message)
         message = str(0) + message
 
@@ -429,7 +438,7 @@ class Redirector():
         # direct call to the raft process
         raft_port = partition_no.broker + 2000
         # create the message
-        message = {'topic_name':topic_name, 'consumer_id':consumer_id, 'partition_no':partition_no}
+        message = {'topic':topic_name, 'consumer_id':consumer_id, 'partition_id':partition_no.partition_number}
         message = str(message)
         message = str(1) + message
         
@@ -439,9 +448,12 @@ class Redirector():
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect(('localhost', raft_port))
         sock.sendall(message_bytes)
+        sock.close()
         # listen for the response from the raft server
         # wait until the response is received
         # print("Waiting for response")
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(('localhost', 5050))
         sock.listen(1)
         client, address = sock.accept()
         with client:

@@ -70,10 +70,10 @@ class raftProc:
             _params = {}
             try:
                 resp = requests.post(newLink, json = _params, data = _params, timeout = 2)
-                time.sleep(2)
+                time.sleep(15)
             except requests.exceptions.Timeout:
                 print("The request timed out: Broker "+str(self.broker)+" is not responding !")
-                os._exit()
+                os._exit(1)
 
     # add a new peer to the list of peers
     def add_peer(self, peer):
@@ -124,7 +124,7 @@ class raftProc:
         # message_str = str(message)
         # send the message to all peers
         resp = self.raftObjects[key].dequeue(message)
-        return resp['message']
+        return resp.json()['message']
     
     # handle adding a consumer from a broker
     def add_consumer(self, key, message):
@@ -137,6 +137,16 @@ class raftProc:
         for x in message['peers']:
             peerports.append("localhost:" + str(x))
         self.raftObjects[key] = raftObj(selfport,peerports, self.broker)
+        print("raft object created for topic: " + key)
+        # self.raftObjects[key].add_topic(message)
+
+        print("Adding topic")
+        topic = message['topic']
+        partition_id = message['partition_id']
+        newLink = get_link(self.broker) + "/topics" #Link for adding a topic
+        _params = {"topic_name":topic, "partition_no" : partition_id}
+        requests.post(newLink, json = _params, data = _params)
+
         return "success"
 
     # send a message to all peers
@@ -176,21 +186,28 @@ class raftProc:
             with client_sock:
                 message_bytes = client_sock.recv(1024)
                 sender_port = struct.unpack('>i', message_bytes[:4])[0]
-                # if the message is from the broker, handle it
                 print(sender_port)
+                # if the message is from the broker, handle it
                 if sender_port == self.broker:
                     resp = self.handle_broker_message(message_bytes)
                     if resp is not None:
                         # encode the response to bytes
+                        print("Sending response to broker: " + str(resp))
                         resp = resp.encode('utf-8')
-                        client_sock.sendall(resp)
+                        # send to tcp port 5050
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.connect(('localhost', 5050))
+                        sock.sendall(resp)
+                        sock.close()
+                        # client_sock.sendall(resp)
             # if the message is from a peer, handle it
-        client_sock.close()
+            client_sock.close()
 
     def handle_broker_message(self, message_bytes):
         # check if the message is enqueue or dequeue
         flag = int(message_bytes[4:5])
         message = message_bytes[5:].decode('utf-8')
+        message = ast.literal_eval(message)
         topic_name = message['topic']
         partition_id = message['partition_id']
         key = str(topic_name) + "_" + str(partition_id)
@@ -305,10 +322,11 @@ class raftObj(SyncObj):
         _params = {"topic_name" : topic, "consumer_id": consumer_id}
         requests.post(newLink, data = _params, json = _params, params = _params)
     
-    # @replicated_sync
-    # def add_topic(self, message):
-    #     topic = message['topic']
-    #     partition_id = message['partition_id']
-    #     newLink = get_link(self.brokerPort) + "/topics" #Link for adding a topic
-    #     _params = {"topic_name":topic, "partition_no" : partition_id}
-    #     requests.post(newLink, json = _params, data = _params)
+    @replicated_sync
+    def add_topic(self, message):
+        print("Adding topic")
+        topic = message['topic']
+        partition_id = message['partition_id']
+        newLink = get_link(self.brokerPort) + "/topics" #Link for adding a topic
+        _params = {"topic_name":topic, "partition_no" : partition_id}
+        requests.post(newLink, json = _params, data = _params)
