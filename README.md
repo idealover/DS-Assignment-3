@@ -1,4 +1,4 @@
-# DS_Assignment2
+# DS_Assignment3
 
 
 ## Setting up Dependencies
@@ -7,7 +7,7 @@ Run the following commands in the terminal.
 
 - To setup and activate the virtual environment:
 ```
-assign2-venv\Scripts\activate
+Scripts\activate
 ```
 
 - Install dependencies:
@@ -39,7 +39,13 @@ flask run -p %port
 ```
 python create_broker.py %n
 ```
-* Replace %n with the id number for the broker
+ Replace %n with the id number for the broker
+
+- For linux based systems, this will spawn the raft process, but Windows does not support fork. Hence, we need to run the raft processes separately as:
+```
+python raftproc.py %raft_port %broker_port
+```
+ Replace %raft_port and %broker_port by the port of the raft process and the port of the corresponding broker
 
 
 ## Running tests
